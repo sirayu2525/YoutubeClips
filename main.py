@@ -1,5 +1,22 @@
 from chat_downloader import ChatDownloader # ライブラリhttps://chat-downloader.readthedocs.io/en/latest/index.htmlより
 from matplotlib import pyplot as plt # データをプロットしてグラフを描くライブラリ
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+keywords = os.getenv("KEYWORD")  # 環境変数からキーワードを取得
+
+if keywords is None:
+    raise ValueError("KEYWORD is not set in the .env file")
+
+keywords = keywords.split(",")  # カンマで分割してリストに変換
+
+def seconds_to_hms(seconds):
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return f"{hours}時間{minutes}分{seconds}秒"
 
 class FunctionUtils:
     @staticmethod
@@ -64,23 +81,35 @@ def main():
     for message in chat:
         time_in_seconds = round(fu.nested_item_value(message, ["time_in_seconds"]))
         text = fu.nested_item_value(message, ["message"])
-        if text and "草" in text:
+        if text and any(keyword in text for keyword in keywords):
             chat_time.append(time_in_seconds)
             chat_mess.append(text)
 
-    message_count = chat_count(chat_time, interval=10)  # 10秒間隔でカウント
+    message_count = chat_count(chat_time, interval=20)  # 20秒間隔でカウント
+
+    # メッセージカウントをソート
+    sorted_indices = sorted(range(len(message_count)), key=lambda i: message_count[i], reverse=True)
+    sorted_times = [i * 20 for i in sorted_indices]
+    sorted_counts = [message_count[i] for i in sorted_indices]
+
+    # 上位10個のxの値を表示
+    top_10_times = sorted_times[:10]
+    top_10_times_hms = [seconds_to_hms(time) for time in top_10_times]
+    print("Top 10 times with highest message counts:", top_10_times_hms)
 
     fig = plt.figure()
-    plt.plot([i * 10 for i in range(len(message_count))], message_count, "o-", picker=1, color="blue")  # X軸を10秒間隔に調整
+    plt.plot([i * 20 for i in range(len(message_count))], message_count, "o-", picker=1, color="blue")  # X軸を20秒間隔に調整
     ln_v = plt.axvline(0)
 
     plt.connect('motion_notify_event', motion)
     fig.canvas.mpl_connect('button_press_event', onclick)
 
-    plt.title("How many comments are there?")
-    plt.xlabel("time(s)")
-    plt.ylabel("numbers")
-    plt.xticks(range(0, len(message_count) * 10, 10))  # X軸の目盛りを10秒間隔に設定
+    # グラフの可読性を向上
+    plt.title("Message Count Over Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Message Count")
+    plt.grid(True)
+    plt.xticks(range(0, max(sorted_times) + 20, 20))  # X軸の目盛りを20秒間隔に設定
     plt.show()
 
 if __name__ == '__main__':
