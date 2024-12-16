@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 # 環境変数をロード
-load_dotenv()
+load_dotenv(override=True)
 
 # APIキーとチャンネルIDを設定
 API_KEY = os.getenv("API_KEY").strip()
