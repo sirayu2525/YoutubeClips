@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # APIキーとチャンネルIDを設定
-API_KEY = os.getenv("API_KEY")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
-print(API_KEY, CHANNEL_ID)
+API_KEY = os.getenv("API_KEY").strip()
+CHANNEL_ID = os.getenv("CHANNEL_ID").strip()
+print(API_KEY)
 
 def get_video_urls(api_key, channel_id):
     try:
