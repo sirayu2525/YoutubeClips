@@ -2,10 +2,14 @@ import googleapiclient.discovery
 import googleapiclient.errors
 import sqlite3
 import os
+from dotenv import load_dotenv
+
+# 環境変数をロード
+load_dotenv()
 
 # APIキーとチャンネルIDを設定
-API_KEY = 'AIzaSyDobsi0OL9BRRDqQtFsKUjADCbySfbFJU4'
-CHANNEL_ID = 'UC1uv2Oq6kNxgATlCiez59hw'
+API_KEY = os.getenv('API_KEY')
+CHANNEL_ID = os.getenv('CHANNEL_ID')
 
 def get_video_urls(api_key, channel_id):
     try:
