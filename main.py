@@ -1,9 +1,12 @@
 from chat_downloader import ChatDownloader # ライブラリhttps://chat-downloader.readthedocs.io/en/latest/index.htmlより
-from matplotlib import pyplot as plt # データをプロットしてグラフを描くライブラリ
 import os
+import sys
 from dotenv import load_dotenv
+#rom function_utils import FunctionUtils
+from youtube_api import get_video_length  # 動画の長さを取得する関数をインポート
 
-load_dotenv()
+
+load_dotenv(override=True)
 
 keywords = os.getenv("KEYWORD")  # 環境変数からキーワードを取得
 
@@ -42,8 +45,8 @@ class FunctionUtils:
             parrent_object = result
         return result
 
-def chat_count(lists, interval=10):
-    # 10秒ごとにカウントする
+def chat_count(lists, interval=20):
+    # 20秒ごとにカウントする
     max_time = max(lists) if lists else 0
     counts = [0] * ((max_time // interval) + 1)
     
@@ -58,24 +61,19 @@ def main():
     chat_time = []
     chat_mess = []
 
-    def motion(event):
-        x = event.xdata
-        try:
-            ln_v.set_xdata(round(x))
-        except TypeError:
-            pass
-        plt.draw()
+    # コマンドライン引数からURLを取得
+    if len(sys.argv) < 2:
+        raise ValueError("URL is not provided")
+    url = sys.argv[1]
 
-    def onclick(event):
-        x = round(event.xdata)
-        print(f'event.xdata={x}')
-        if x < len(message_count):
-            print(f'message_count={message_count[x]}')
+    # 動画の長さを取得
+    video_length = get_video_length(url)
+    if video_length is None:
+        raise ValueError("Failed to retrieve video length")
 
     # URLからchatを読み込み
-    url = 'https://www.youtube.com/watch?v=i7pnUeBY8d0'  # ここにYouTubeのURLを書き込む
-    start = '0:00'  # ここに読み込みを開始する秒数を書き込む（例：0:00）
-    end = '50:00'  # ここに読み込みを終了する秒数を書き込む（例：0:10）
+    start = '0:00'  # 読み込みを開始する秒数
+    end = video_length  # 読み込みを終了する秒数
     chat = ChatDownloader().get_chat(url, start_time=start, end_time=end)
 
     for message in chat:
@@ -97,20 +95,6 @@ def main():
     top_10_times_hms = [seconds_to_hms(time) for time in top_10_times]
     print("Top 10 times with highest message counts:", top_10_times_hms)
 
-    fig = plt.figure()
-    plt.plot([i * 20 for i in range(len(message_count))], message_count, "o-", picker=1, color="blue")  # X軸を20秒間隔に調整
-    ln_v = plt.axvline(0)
-
-    plt.connect('motion_notify_event', motion)
-    fig.canvas.mpl_connect('button_press_event', onclick)
-
-    # グラフの可読性を向上
-    plt.title("Message Count Over Time")
-    plt.xlabel("Time (s)")
-    plt.ylabel("Message Count")
-    plt.grid(True)
-    plt.xticks(range(0, max(sorted_times) + 20, 20))  # X軸の目盛りを20秒間隔に設定
-    plt.show()
 
 if __name__ == '__main__':
     main()
