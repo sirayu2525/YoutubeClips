@@ -16,6 +16,15 @@ if keywords is None:
 keywords = keywords.split(",")  # カンマで分割してリストに変換
 
 def seconds_to_hms(seconds):
+    """
+    秒数を時:分:秒の形式に変換します。
+
+    Args:
+        seconds (int): 秒数。
+
+    Returns:
+        str: 時:分:秒の形式の文字列。
+    """
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
     seconds = seconds % 60
@@ -24,7 +33,16 @@ def seconds_to_hms(seconds):
 class FunctionUtils:
     @staticmethod
     def nested_item_value(parrent_object, nest_list):  # 複雑なネスト構造の中からほしいものを取り出すメソッド
-        """ return nested data """
+        """
+        複雑なネスト構造の中から指定されたキーの値を取り出します。
+
+        Args:
+            parrent_object (dict or list): 親オブジェクト。
+            nest_list (list): ネストされたキーのリスト。
+
+        Returns:
+            any: 取り出された値。存在しない場合はNone。
+        """
         if not nest_list:  # 単に空かどうかをTrue Falseで見分けられる。
             return parrent_object
         result = ""
@@ -45,6 +63,17 @@ class FunctionUtils:
     
 
 def get_video_urls_from_db(start, end, db_name='data/youtube_data.db'):
+    """
+    SQLiteデータベースから指定された範囲の動画URLを取得します。
+
+    Args:
+        start (int): 開始インデックス。
+        end (int): 終了インデックス。
+        db_name (str): SQLiteデータベースのファイル名。
+
+    Returns:
+        list: 動画IDとURLのタプルのリスト。
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 
@@ -58,6 +87,14 @@ def get_video_urls_from_db(start, end, db_name='data/youtube_data.db'):
     return video_data
 
 def update_top_10_times_in_db(video_id, top_10_times, db_name='data/youtube_data.db'):
+    """
+    上位10個の時間をSQLiteデータベースに更新します。
+
+    Args:
+        video_id (int): 動画ID。
+        top_10_times (list): 上位10個の時間のリスト。
+        db_name (str): SQLiteデータベースのファイル名。
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 
@@ -76,6 +113,16 @@ def update_top_10_times_in_db(video_id, top_10_times, db_name='data/youtube_data
     conn.close()
 
 def chat_count(chat_time, interval=20):
+    """
+    チャットメッセージの時間を指定された間隔でカウントします。
+
+    Args:
+        chat_time (list): チャットメッセージの時間のリスト。
+        interval (int): カウント間隔（秒単位）。
+
+    Returns:
+        list: 各間隔ごとのメッセージ数のリスト。
+    """
     max_time = max(chat_time) if chat_time else 0
     bins = [0] * ((max_time // interval) + 1)
     for time in chat_time:
@@ -83,6 +130,13 @@ def chat_count(chat_time, interval=20):
     return bins
 
 def process_video_url(video_id, url):
+    """
+    指定された動画URLのチャットデータを処理し、上位10個の時間をデータベースに保存します。
+
+    Args:
+        video_id (int): 動画ID。
+        url (str): 動画URL。
+    """
     fu = FunctionUtils()
     chat_time = []
     chat_mess = []
@@ -125,6 +179,10 @@ def process_video_url(video_id, url):
         update_top_10_times_in_db(video_id, ["No chat replay"])
 
 def main():
+    """
+    メイン関数。コマンドライン引数から開始インデックスと終了インデックスを取得し、
+    指定された範囲の動画URLを処理します。
+    """
     if len(sys.argv) < 3:
         raise ValueError("Start and end indices are not provided")
     start_index = int(sys.argv[1])

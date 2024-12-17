@@ -11,8 +11,17 @@ load_dotenv(override=True)
 API_KEY = os.getenv("API_KEY").strip()
 CHANNEL_ID = os.getenv("CHANNEL_ID").strip()
 
-
 def get_video_urls(api_key, channel_id):
+    """
+    指定されたチャンネルの動画URLを取得します。
+
+    Args:
+        api_key (str): YouTube Data APIキー。
+        channel_id (str): チャンネルID。
+
+    Returns:
+        list: 動画URLのリスト。取得できなかった場合は空リスト。
+    """
     try:
         # YouTube Data APIクライアントを作成
         youtube = googleapiclient.discovery.build('youtube', 'v3', developerKey=api_key)
@@ -57,6 +66,13 @@ def get_video_urls(api_key, channel_id):
         return []
 
 def save_urls_to_sqlite(video_urls, db_name='data/youtube_data.db'):
+    """
+    動画URLをSQLiteデータベースに保存します。
+
+    Args:
+        video_urls (list): 保存する動画URLのリスト。
+        db_name (str): SQLiteデータベースのファイル名。
+    """
     # ディレクトリが存在しない場合は作成
     if db_name:
         os.makedirs(os.path.dirname(db_name), exist_ok=True)
@@ -86,6 +102,12 @@ def save_urls_to_sqlite(video_urls, db_name='data/youtube_data.db'):
     conn.close()
 
 def display_database_contents(db_name='data/youtube_data.db'):
+    """
+    SQLiteデータベースの内容を表示します。
+
+    Args:
+        db_name (str): SQLiteデータベースのファイル名。
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 

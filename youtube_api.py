@@ -9,6 +9,15 @@ load_dotenv(override=True)
 API_KEY = os.getenv("API_KEY")
 
 def get_video_length(url):
+    """
+    指定されたYouTube動画の長さを取得します。
+
+    Args:
+        url (str): YouTube動画のURL。
+
+    Returns:
+        int: 動画の長さ（秒単位）。取得できなかった場合はNone。
+    """
     try:
         video_id = re.search(r'v=([^&]+)', url).group(1)
         youtube = googleapiclient.discovery.build('youtube', 'v3', developerKey=API_KEY)
