@@ -86,27 +86,33 @@ def get_video_urls_from_db(start, end, db_name='data/youtube_data.db'):
     conn.close()
     return video_data
 
-def update_top_10_times_in_db(video_id, top_10_times, db_name='data/youtube_data.db'):
+def update_top_10_times_in_db(video_id, top_10_times, max_message_count, checked, db_name='data/youtube_data.db'):
     """
-    上位10個の時間をSQLiteデータベースに更新します。
+    上位10個の時間とチェックボックスの状態をSQLiteデータベースに更新します。
 
     Args:
         video_id (int): 動画ID。
         top_10_times (list): 上位10個の時間のリスト。
+        max_message_count (int): 一番多いメッセージ数。
+        checked (bool): チェックボックスの状態。
         db_name (str): SQLiteデータベースのファイル名。
     """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 
-    # `top10`列が存在しない場合は追加
+    # `top10`列、`max_message_count`列、`checked`列が存在しない場合は追加
     cursor.execute("PRAGMA table_info(videos)")
     columns = [info[1] for info in cursor.fetchall()]
     if 'top10' not in columns:
         cursor.execute("ALTER TABLE videos ADD COLUMN top10 TEXT")
+    if 'max_message_count' not in columns:
+        cursor.execute("ALTER TABLE videos ADD COLUMN max_message_count INTEGER")
+    if 'checked' not in columns:
+        cursor.execute("ALTER TABLE videos ADD COLUMN checked BOOLEAN")
 
-    # 上位10個の時間をデータベースに更新
+    # 上位10個の時間、一番多いメッセージ数、チェックボックスの状態をデータベースに更新
     top_10_times_str = ','.join(top_10_times)
-    cursor.execute("UPDATE videos SET top10 = ? WHERE id = ?", (top_10_times_str, video_id))
+    cursor.execute("UPDATE videos SET top10 = ?, max_message_count = ?, checked = ? WHERE id = ?", (top_10_times_str, max_message_count, int(checked), video_id))
 
     # 変更を保存して接続を閉じる
     conn.commit()
@@ -137,6 +143,10 @@ def process_video_url(video_id, url):
         video_id (int): 動画ID。
         url (str): 動画URL。
     """
+    if not url:
+        print(f"Skipping video ID {video_id} because URL is None")
+        return
+    
     fu = FunctionUtils()
     chat_time = []
     chat_mess = []
@@ -171,12 +181,16 @@ def process_video_url(video_id, url):
         top_10_times_hms = [seconds_to_hms(time) for time in top_10_times]
         print("Top 10 times with highest message counts:", top_10_times_hms)
 
-        # 上位10個の時間をデータベースに保存
-        update_top_10_times_in_db(video_id, top_10_times_hms)
+        # 一番多いメッセージ数を取得
+        max_message_count = max(message_count) if message_count else 0
+
+
+        # 上位10個の時間と一番多いメッセージ数、チェックボックスの状態をデータベースに保存
+        update_top_10_times_in_db(video_id, top_10_times_hms, max_message_count, False)
 
     except NoChatReplay:
         print(f"No chat replay available for video: {url}")
-        update_top_10_times_in_db(video_id, ["No chat replay"])
+        update_top_10_times_in_db(video_id, ["No chat replay"], 0, False)
 
 def main():
     """
